@@ -18,13 +18,13 @@ target importTarget (pkg : NPackage _package.name) : FilePath := do
     compileO ffiC oFile srcFile flags
 
 extern_lib libffi (pkg : NPackage _package.name) := do
-  let name := nameToStaticLib "ffi"
+  let name := nameToSharedLib "ffi"
   let job ← fetch <| pkg.target ``importTarget
-  buildStaticLib (pkg.buildDir / name) #[job]
+  buildLeanSharedLib (pkg.buildDir / name) #[job]
 
 extern_lib some_rust_lib (pkg : NPackage _package.name) := do
   proc { cmd := "cargo", args := #["build", "--release"], cwd := pkg.dir }
-  let name := nameToStaticLib "some_rust_lib"
+  let name := nameToSharedLib "some_rust_lib"
   let srcPath := pkg.dir / "target" / "release" / name
   IO.FS.createDirAll pkg.buildDir
   let tgtPath := pkg.buildDir / name
