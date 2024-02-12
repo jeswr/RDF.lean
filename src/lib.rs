@@ -1,6 +1,6 @@
 extern crate lean_sys;
 extern crate oxrdf;
-use std::slice;
+use std::{any::Any, slice};
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
 use oxrdfio::{RdfFormat, RdfParser, FromReadQuadReader, ParseError}; // RdfSerializer
@@ -27,8 +27,18 @@ pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_re
     let mut x = unsafe { lean_mk_empty_array() };
     for q in quads {
         x = unsafe { lean_array_push(x, lean_mk_rust_string(q.subject.to_string().as_str())) };
+        
+        // if (q.subject.is_blank_node()) {
+        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
+        // } else if (q.subject.is_named_node()) {
+        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
+        // } else  {
+        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
+        // }
+
         x = unsafe { lean_array_push(x, lean_mk_rust_string(q.predicate.to_string().as_str())) };
         x = unsafe { lean_array_push(x, lean_mk_rust_string(q.object.to_string().as_str())) };
+        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.graph_name.to_string().as_str())) };
     }
     return x;
 }
