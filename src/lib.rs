@@ -24,23 +24,61 @@ pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_re
 
     let quads = parse(str.as_bytes(), fmt_str, base_iri_str).unwrap();
 
-    let mut x = unsafe { lean_mk_empty_array() };
+    let mut y = unsafe { lean_mk_empty_array() };
     for q in quads {
-        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.subject.to_string().as_str())) };
-        
-        // if (q.subject.is_blank_node()) {
-        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
-        // } else if (q.subject.is_named_node()) {
-        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
-        // } else  {
-        //     x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
-        // }
+        let mut x = unsafe { lean_mk_empty_array() };
 
-        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.predicate.to_string().as_str())) };
-        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.object.to_string().as_str())) };
-        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.graph_name.to_string().as_str())) };
+        let sub_string_subject = q.subject.to_string();
+        
+        if (q.subject.is_blank_node()) {
+
+            x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
+            let slice = &sub_string_subject[2..sub_string_subject.len()];
+            x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+        } else if (q.subject.is_named_node()) {
+
+            x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
+            let slice = &sub_string_subject[1..sub_string_subject.len()-1];
+            x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+        } else  {
+            // This should actually be an error case
+            // x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
+        }
+
+        x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
+        let sub_string_predicate = q.predicate.to_string();
+        let slice = &sub_string_predicate[1..sub_string_predicate.len()-1];
+        x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+
+        let sub_string_object = q.object.to_string();
+
+        // // x = unsafe { lean_array_push(x, lean_mk_rust_string(q.object.to_string().as_str())) };
+
+        if (q.object.is_blank_node()) {
+
+            x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
+            let slice = &sub_string_object[2..sub_string_object.len()];
+            x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+        } else if (q.object.is_named_node()) {
+
+            x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
+            let slice = &sub_string_object[1..sub_string_object.len()-1];
+            x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+        } else if (q.object.is_literal())  {
+
+            x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
+            let slice = &sub_string_object[1..sub_string_object.len()-1];
+            x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
+        } else {
+            // error
+        }
+
+        // FIXME: Add graph support
+        // x = unsafe { lean_array_push(x, lean_mk_rust_string(q.graph_name.to_string().as_str())) };
+
+        y = unsafe { lean_array_push(y, x) };
     }
-    return x;
+    return y;
 }
 
 pub fn lean_mk_rust_string(s: &str) -> lean_obj_res {
