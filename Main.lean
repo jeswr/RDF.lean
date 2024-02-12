@@ -122,4 +122,4 @@ def parse (a b c: String) := convert $ parseFromRust a b c
 
 def main : IO Unit :=
   -- IO.println $ addFromRust "Hello from Lean!"
-  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", [], e:x ." "text/n3" "http://example.org/my/base"
+  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", \"f\"@en, [], e:x ." "text/n3" "http://example.org/my/base"

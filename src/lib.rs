@@ -4,20 +4,23 @@ use std::slice;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
 use oxrdfio::{RdfFormat, RdfParser, ParseError, RdfSerializer}; // RdfSerializer
-use oxrdf::{NamedNode, Quad, Literal, Term};
+use oxrdf::{BlankNode, GraphName::DefaultGraph, Literal, NamedNode, Quad, Term};
 use std::str;
 
-pub fn toTerm(termType: &str, value: &str) -> Term {
+pub fn toTerm(termType: &str, value: &str) -> Option<Term> {
     if termType == "NamedNode" {
-        return NamedNode::new(value).unwrap().into();
+        return Some(NamedNode::new(value).unwrap().into());
     } else if termType == "BlankNode" {
-        return oxrdf::BlankNode::new(value).unwrap().into();
+        return Some(oxrdf::BlankNode::new(value).unwrap().into());
     } else if termType == "Literal" {
-        // return Literal::new(value).unwrap().into();
-        return NamedNode::new("http://example.com/error").unwrap().into();
+        // Literal::
+        return Some(NamedNode::new("http://example.com/error").unwrap().into());
+    } else if termType == "DefaultGraph" {
+        // FIXME: Handle this case
+        return None;
+        // return Some(GraphName::DefaultGraph);
     } else {
-        // error
-        return NamedNode::new("http://example.com/error").unwrap().into();
+        return None;
     }
 }
 
@@ -103,7 +106,8 @@ pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_re
             let slice = &sub_string_object[1..sub_string_object.len()-1];
             x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
         } else if q.object.is_literal()  {
-
+            let object_literal: Literal = 3.into();
+            print!("OBJECT LITERAL IS: {}", object_literal);
             x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
             let slice = &sub_string_object[1..sub_string_object.len()-1];
             x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
