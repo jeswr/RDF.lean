@@ -6,4 +6,6 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-lean-sys = { version = "0.0.5", default-features = false }
+lean-sys = { version = "0.0.5", features=["small_allocator"], default-features=false }
+oxrdf = "^0.2.0-alpha.2"
+oxrdfio = "0.1.0-alpha.2"

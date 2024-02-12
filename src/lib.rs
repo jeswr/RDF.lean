@@ -1,6 +1,37 @@
 extern crate lean_sys;
+extern crate oxrdf;
 use std::slice;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
+extern crate oxrdfio;
+use oxrdfio::{RdfFormat, RdfParser, FromReadQuadReader, ParseError}; // RdfSerializer
+use oxrdf::{NamedNode, NamedNodeRef, Quad};
+
+pub fn parse(s: &[u8], fmt: &str, base_iri: &str) -> Option<Vec<Quad>> {
+    let mut parser = RdfFormat::from_media_type(fmt).and_then(|fmt| Some(RdfParser::from_format(fmt)));
+
+    if base_iri != "" {
+        parser = parser.and_then(|p| p.with_base_iri(base_iri).ok());
+    }
+
+    return parser.and_then(|p| p.parse_read(s).collect::<Result<Vec<Quad>, ParseError>>().ok());
+}
+
+#[no_mangle]
+pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_res) -> lean_obj_res {
+    let str = lean_to_rust_string(s);
+    let fmt_str = lean_to_rust_string(fmt);
+    let base_iri_str = lean_to_rust_string(base_iri);
+
+    let quads = parse(str.as_bytes(), fmt_str, base_iri_str).unwrap();
+
+    let mut x = unsafe { lean_mk_empty_array() };
+    for q in quads {
+        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.subject.to_string().as_str())) };
+        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.predicate.to_string().as_str())) };
+        x = unsafe { lean_array_push(x, lean_mk_rust_string(q.object.to_string().as_str())) };
+    }
+    return x;
+}
 
 pub fn lean_mk_rust_string(s: &str) -> lean_obj_res {
     unsafe { lean_mk_string_from_bytes(s.as_ptr(), s.len()) }
@@ -42,7 +73,7 @@ pub fn array_from_lean_string_array(lean_array: lean_obj_res) -> Vec<&'static st
 }
 
 #[no_mangle]
-pub extern "C" fn add_from_rust(_a : i32, _b : i32) -> lean_obj_res {
-    let vec: Vec<&str> = ["NamedNode", "http://example.org/test", "NamedNode", "http://example.org/predicate", "Literal", "belting"].to_vec();
+pub extern "C" fn add_from_rust(a: lean_obj_res) -> lean_obj_res {
+    let vec: Vec<&str> = ["NamedNode", "http://example.org/test", "NamedNode", "http://example.org/predicate", "Literal", "belting", lean_to_rust_string(a), "5"].to_vec();
     return lean_mk_string_array(vec.clone())
 }
