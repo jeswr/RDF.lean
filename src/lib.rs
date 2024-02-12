@@ -7,15 +7,15 @@ use oxrdfio::{RdfFormat, RdfParser, ParseError, RdfSerializer}; // RdfSerializer
 use oxrdf::{Literal, NamedNode, Quad, Term};
 use std::str;
 
-pub fn toTerm(termType: &str, value: &str) -> Option<Term> {
-    if termType == "NamedNode" {
+pub fn to_term(term_type: &str, value: &str) -> Option<Term> {
+    if term_type == "NamedNode" {
         return Some(NamedNode::new(value).unwrap().into());
-    } else if termType == "BlankNode" {
+    } else if term_type == "BlankNode" {
         return Some(oxrdf::BlankNode::new(value).unwrap().into());
-    } else if termType == "Literal" {
+    } else if term_type == "Literal" {
         // Literal::
         return Some(NamedNode::new("http://example.com/error").unwrap().into());
-    } else if termType == "DefaultGraph" {
+    } else if term_type == "DefaultGraph" {
         // FIXME: Handle this case
         return None;
         // return Some(GraphName::DefaultGraph);
