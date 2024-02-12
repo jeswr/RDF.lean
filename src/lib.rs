@@ -3,8 +3,46 @@ extern crate oxrdf;
 use std::slice;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
-use oxrdfio::{RdfFormat, RdfParser, ParseError}; // RdfSerializer
-use oxrdf::Quad;
+use oxrdfio::{RdfFormat, RdfParser, ParseError, RdfSerializer}; // RdfSerializer
+use oxrdf::{NamedNode, Quad, Literal, Term};
+use std::str;
+
+pub fn toTerm(termType: &str, value: &str) -> Term {
+    if termType == "NamedNode" {
+        return NamedNode::new(value).unwrap().into();
+    } else if termType == "BlankNode" {
+        return oxrdf::BlankNode::new(value).unwrap().into();
+    } else if termType == "Literal" {
+        // return Literal::new(value).unwrap().into();
+        return NamedNode::new("http://example.com/error").unwrap().into();
+    } else {
+        // error
+        return NamedNode::new("http://example.com/error").unwrap().into();
+    }
+}
+
+#[no_mangle]
+pub fn serialize_to_rust(quads: lean_obj_res, fmt: lean_obj_res) -> lean_obj_res {
+    let fmt_str = lean_to_rust_string(fmt);
+    // fixme: do error handling properly
+    let mut serializer = RdfFormat::from_media_type(fmt_str).and_then(|fmt| Some(RdfSerializer::from_format(fmt).serialize_to_write(Vec::new()))).unwrap();
+
+    let size = unsafe { lean_array_size(quads) };
+    for i in 0..size {
+        let quad = unsafe { lean_array_uget(quads, i) };
+        let quadStrings = array_from_lean_string_array(quad);
+        let _ = serializer.write_quad(&Quad {
+            subject: NamedNode::new("http://example.com/s").unwrap().into(),
+            predicate: NamedNode::new("http://example.com/p").unwrap().into(),
+            object: NamedNode::new("http://example.com/o").unwrap().into(),
+            graph_name: oxrdf::GraphName::DefaultGraph.into(),
+        });
+    }
+
+    let result = serializer.finish().unwrap();
+    let resultstr = str::from_utf8(&result).unwrap();
+    return lean_mk_rust_string(resultstr);
+}
 
 pub fn parse(s: &[u8], fmt: &str, base_iri: &str) -> Option<Vec<Quad>> {
     let mut parser = RdfFormat::from_media_type(fmt).and_then(|fmt| Some(RdfParser::from_format(fmt)));

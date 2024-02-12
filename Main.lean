@@ -39,6 +39,20 @@ inductive Term where
   | DefaultGraph
 deriving Inhabited, Repr
 
+def Term.value : Term → String
+  | Term.NamedNode s => s
+  | Term.BlankNode s => s
+  | Term.Literal s => s
+  | Term.Variable s => s
+  | Term.DefaultGraph => "DefaultGraph"
+
+def Term.termType : Term → String
+  | Term.NamedNode _ => "NamedNode"
+  | Term.BlankNode _ => "BlankNode"
+  | Term.Literal _ => "Literal"
+  | Term.Variable _ => "Variable"
+  | Term.DefaultGraph => "DefaultGraph"
+
 instance : ToString Term where
   toString s := match s with
   | Term.NamedNode s => "<" ++ s ++ ">"
@@ -96,10 +110,16 @@ def toTriple (t : Array String) : Except String Triple := do
     ⟩
   else Except.error ("Invalid Triple length [" ++ toString t.size ++ "]")
 
+def fromTriple (t : Triple) : Array String := #[
+  Term.termType t.subject, Term.value t.subject,
+  Term.termType t.predicate, Term.value t.predicate,
+  Term.termType t.object, Term.value t.object
+]
+
 def convert (str: Array (Array String)): Except String (Array Triple) := str.mapM toTriple
 
 def parse (a b c: String) := convert $ parseFromRust a b c
 
 def main : IO Unit :=
   -- IO.println $ addFromRust "Hello from Lean!"
-  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", [], e:x ." "text/n3" ""
+  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", [], e:x ." "text/n3" "http://example.org/my/base"
