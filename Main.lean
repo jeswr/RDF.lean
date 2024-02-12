@@ -1,9 +1,3 @@
-import Lean.Data
-import Lean.Data.HashSet
-
-@[extern "add_from_rust"]
-opaque addFromRust : String → Array String
-
 @[extern "parse_from_rust"]
 opaque parseFromRust : String → String → String → Array (Array String)
 
@@ -93,33 +87,14 @@ def toObject (t s : String) : Except String Object :=
   else if t = "Literal" then Except.ok $ Object.Literal s
   else Except.error ("Invalid Object type [" ++ t ++ "]")
 
--- def toTriple (t : Array String) (ok : t.size > 6) : Except String String := do
---   -- TODO: Work out how to do required proofs on array indices
---   let s ← toSubject t[0] t[1]
---   pure s
--- open Nat
-
-
 def toTriple (t : Array String) : Except String Triple := do
   if h: t.size = 6 then
     pure ⟨
-      (← toSubject (t.get ⟨0, by rw [h]; sorry⟩) (t.get ⟨1, by rw [h]; sorry⟩)),
-      (← toPredicate (t.get ⟨2, by rw [h]; sorry⟩) (t.get ⟨3, by rw [h]; sorry⟩)),
-      (← toObject (t.get ⟨4, by rw [h]; sorry⟩) (t.get ⟨5, by rw [h]; sorry⟩))
+      (← toSubject (t.get ⟨0, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨1, by rw [h]; simp (config := {decide := true})⟩)),
+      (← toPredicate (t.get ⟨2, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨3, by rw [h]; simp (config := {decide := true})⟩)),
+      (← toObject (t.get ⟨4, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨5, by rw [h]; simp (config := {decide := true})⟩))
     ⟩
   else Except.error ("Invalid Triple length [" ++ toString t.size ++ "]")
-
-
--- def toTriple (t : Array String) : Except String Triple := do
---   if h: t.size = 6 then
---     pure ⟨
---       (← toSubject (t.get ⟨0, by rw [h]; simp⟩) (t.get ⟨1, by rw [h]; simp⟩)),
---       (← toPredicate (t.get ⟨2, by rw [h]; simp⟩) (t.get ⟨3, by rw [h]; simp⟩)),
---       (← toObject (t.get ⟨4, by rw [h]; simp⟩) (t.get ⟨5, by rw [h]; simp⟩))
---     ⟩
---   else Except.error ("Invalid Triple length [" ++ toString t.size ++ "]")
-
--- def main : IO Unit := IO.println $ toTriple (myLeanFun 1)
 
 def convert (str: Array (Array String)): Except String (Array Triple) := str.mapM toTriple
 
@@ -127,4 +102,4 @@ def parse (a b c: String) := convert $ parseFromRust a b c
 
 def main : IO Unit :=
   -- IO.println $ addFromRust "Hello from Lean!"
-  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", [], e:x ." "text/turtle" ""
+  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", [], e:x ." "text/n3" ""

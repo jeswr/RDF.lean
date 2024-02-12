@@ -1,10 +1,10 @@
 extern crate lean_sys;
 extern crate oxrdf;
-use std::{any::Any, slice};
+use std::slice;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
-use oxrdfio::{RdfFormat, RdfParser, FromReadQuadReader, ParseError}; // RdfSerializer
-use oxrdf::{NamedNode, NamedNodeRef, Quad};
+use oxrdfio::{RdfFormat, RdfParser, ParseError}; // RdfSerializer
+use oxrdf::Quad;
 
 pub fn parse(s: &[u8], fmt: &str, base_iri: &str) -> Option<Vec<Quad>> {
     let mut parser = RdfFormat::from_media_type(fmt).and_then(|fmt| Some(RdfParser::from_format(fmt)));
@@ -30,12 +30,12 @@ pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_re
 
         let sub_string_subject = q.subject.to_string();
         
-        if (q.subject.is_blank_node()) {
+        if q.subject.is_blank_node() {
 
             x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
             let slice = &sub_string_subject[2..sub_string_subject.len()];
             x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
-        } else if (q.subject.is_named_node()) {
+        } else if q.subject.is_named_node() {
 
             x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
             let slice = &sub_string_subject[1..sub_string_subject.len()-1];
@@ -54,17 +54,17 @@ pub fn parse_from_rust(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_re
 
         // // x = unsafe { lean_array_push(x, lean_mk_rust_string(q.object.to_string().as_str())) };
 
-        if (q.object.is_blank_node()) {
+        if q.object.is_blank_node() {
 
             x = unsafe { lean_array_push(x, lean_mk_rust_string("BlankNode")) };
             let slice = &sub_string_object[2..sub_string_object.len()];
             x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
-        } else if (q.object.is_named_node()) {
+        } else if q.object.is_named_node() {
 
             x = unsafe { lean_array_push(x, lean_mk_rust_string("NamedNode")) };
             let slice = &sub_string_object[1..sub_string_object.len()-1];
             x = unsafe { lean_array_push(x, lean_mk_rust_string(slice)) };
-        } else if (q.object.is_literal())  {
+        } else if q.object.is_literal()  {
 
             x = unsafe { lean_array_push(x, lean_mk_rust_string("Literal")) };
             let slice = &sub_string_object[1..sub_string_object.len()-1];
@@ -118,10 +118,4 @@ pub fn array_from_lean_string_array(lean_array: lean_obj_res) -> Vec<&'static st
         result.push(item);
     }
     return result;
-}
-
-#[no_mangle]
-pub extern "C" fn add_from_rust(a: lean_obj_res) -> lean_obj_res {
-    let vec: Vec<&str> = ["NamedNode", "http://example.org/test", "NamedNode", "http://example.org/predicate", "Literal", "belting", lean_to_rust_string(a), "5"].to_vec();
-    return lean_mk_string_array(vec.clone())
 }
