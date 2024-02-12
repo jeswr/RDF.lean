@@ -4,7 +4,7 @@ use std::slice;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
 use oxrdfio::{RdfFormat, RdfParser, ParseError, RdfSerializer}; // RdfSerializer
-use oxrdf::{BlankNode, GraphName::DefaultGraph, Literal, NamedNode, Quad, Term};
+use oxrdf::{Literal, NamedNode, Quad, Term};
 use std::str;
 
 pub fn toTerm(termType: &str, value: &str) -> Option<Term> {
@@ -33,7 +33,7 @@ pub fn serialize_to_rust(quads: lean_obj_res, fmt: lean_obj_res) -> lean_obj_res
     let size = unsafe { lean_array_size(quads) };
     for i in 0..size {
         let quad = unsafe { lean_array_uget(quads, i) };
-        let quadStrings = array_from_lean_string_array(quad);
+        let _quad_strings = array_from_lean_string_array(quad);
         let _ = serializer.write_quad(&Quad {
             subject: NamedNode::new("http://example.com/s").unwrap().into(),
             predicate: NamedNode::new("http://example.com/p").unwrap().into(),
