@@ -2,7 +2,7 @@ extern crate lean_sys;
 extern crate oxrdf;
 extern crate json;
 
-use std::{error, slice};
+use std::{convert::TryInto, error, slice};
 use json::JsonValue;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
@@ -75,6 +75,8 @@ pub fn to_term_2() -> Term {
 //     }
 // }
 
+
+
 pub fn from_subject(subject: Subject) -> JsonValue {
     if subject.is_blank_node() {
         return json::object! {
@@ -94,35 +96,80 @@ pub fn from_predicate(predicate: NamedNode) -> JsonValue {
     };
 }
 
+pub fn get_term(object: Term) -> JsonValue {
+
+}
+
 pub fn from_term(object: Term) -> JsonValue {
-    if object.is_blank_node() {
-        return json::object! {
-            "BlankNode" => object.to_string()
-        };
-    } else if object.is_named_node() {
-        return json::object! {
-            "NamedNode" => object.to_string()
-        };
-    } else if object.is_literal() {
-        let literal: Literal = object;
-        if literal.is_language_tagged_literal() {
-            return json::object! {
-                "Literal" => [
-                    literal.value(),
-                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
-                    literal.language().unwrap()
-                ]
-            };
-        } else {
-            return json::object! {
-                "Literal" => [
-                    literal.value(),
-                    literal.datatype().unwrap().to_string()
-                ]
-            };
+    match object {
+        Term::NamedNode(iri) => { 
+            let str = iri.into_string();
+            return json::object!{"NamedNode": &str[1..str.len()-1]}
+        },
+        Term::BlankNode(id) => { 
+            let str = id.into_string();
+            return json::object!{"BlankNode": &str[2..str.len()]}
+        },
+        Term::Literal(literal) => {
+            let value = literal.value();
+            let datatype = from_term(literal.datatype().into());
+            if let Some(language) = literal.language() {
+                return json::object!{"Literal": [&value[1..value.len()-1], datatype, language]}
+            } else {
+                return json::object!{"Literal": [&value[1..value.len()-1], datatype]}
+            }
         }
     }
-    panic!("Invalid object type");
+
+
+    // match object {
+    //     Term::NamedNode(iri) => {
+    //         return json::object!{"NamedNode": iri} 
+    //     }
+    //     Term::BlankNode(id) => return json::object!{"BlankNode": id},
+    //     Term::Literal(literal) => {
+    //         return json::object!{"Literal": literal}
+    //         //  let value = literal.value();
+    //         //  if let Some(language) = literal.language() {
+    //         //      /* language tagged literal, do something with value and language */
+    //         //  } else {
+    //         //     /* regular literal */
+    //         //  }
+    //      }
+    //  }
+
+
+    // if object.is_blank_node() {
+    //     return json::object! {
+    //         "BlankNode" => object.to_string()
+    //     };
+    // } else if object.is_named_node() {
+    //     return json::object! {
+    //         "NamedNode" => object.to_string()
+    //     };
+    // } else if object.is_literal() {
+    //     // Cast object as a Literal
+        
+
+    //     let literal: Literal = object.as_ref().into();
+    //     if literal.is_language_tagged_literal() {
+    //         return json::object! {
+    //             "Literal" => [
+    //                 literal.value(),
+    //                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+    //                 literal.language().unwrap()
+    //             ]
+    //         };
+    //     } else {
+    //         return json::object! {
+    //             "Literal" => [
+    //                 literal.value(),
+    //                 literal.datatype().unwrap().to_string()
+    //             ]
+    //         };
+    //     }
+    // }
+    // panic!("Invalid object type");
 }
 
 pub fn get_subject(json: JsonValue) -> Subject {
