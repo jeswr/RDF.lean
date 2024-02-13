@@ -22,6 +22,12 @@ inductive Object where
   | Literal : String → Object
 deriving Repr
 
+inductive Literal where
+  | Language : String → String → Literal
+  | DataTyped : String → String → Literal
+
+-- TODO: Mirror the rust literal coercions here.
+
 instance : ToString Object where
   toString s := match s with
   | Object.NamedNode s => s

@@ -1,125 +1,113 @@
-@[extern "parse_from_rust"]
-opaque parseFromRust : String → String → String → Array (Array String)
+import Lean
+import Lean.Data.Json.Basic
+import Lean.Data.Json.Parser
+import Lean.Data.Json.Printer
+
+open Lean Json ToJson FromJson
+
+structure Entry: Type where
+  entry_date: String
+  description: String
+  --debit: Float
+  --credit: Float
+deriving ToJson, FromJson, Inhabited, Repr
+
+-- Check types
+-- #check #["foo"]
+-- #check 1000.00
+
+structure Ledger : Type where
+  account_name: String
+  account_number: String
+  entries: Array Entry
+deriving Lean.ToJson, Lean.FromJson, Inhabited, Repr
+
+def get_ledger_from_json_string (s: String): Except String Ledger := do
+  let j : Json <- Json.parse s
+  let ledger : Ledger <- fromJson? j
+  return ledger
+
+def ledger_account_string := "{     \"account_name\": \"Example Company\",     \"account_number\": \"1234567890\",     \"entries\": [       {         \"entry_date\": \"2023-10-14\",         \"description\": \"Opening Balance\",         \"debit\": 10000.00,         \"credit\": 0.00       },       {         \"entry_date\": \"2023-10-15\",         \"description\": \"Sale of Products\",         \"debit\": 0.00,         \"credit\": 5000.00       },       {         \"entry_date\": \"2023-10-16\",         \"description\": \"Purchase of Supplies\",         \"debit\": 3000.00,         \"credit\": 0.00       },       {         \"entry_date\": \"2023-10-17\",         \"description\": \"Payment from Customer\",         \"debit\": 2000.00,         \"credit\": 0.00       },       {         \"entry_date\": \"2023-10-18\",         \"description\": \"Utilities Expense\",         \"debit\": 0.00,         \"credit\": 1000.00       }     ]   }"
+#eval (get_ledger_from_json_string ledger_account_string)
+#eval toJson (get_ledger_from_json_string ledger_account_string).toOption.get!
 
 inductive Subject where
   | NamedNode : String → Subject
   | BlankNode : String → Subject
-deriving Repr
+deriving Lean.ToJson, Lean.FromJson, Repr
 
 instance : ToString Subject where
   toString s := match s with
-  | Subject.NamedNode s => "<" ++ s ++ ">"
-  | Subject.BlankNode s => "_:" ++ s
+  | Subject.NamedNode s => s
+  | Subject.BlankNode s => s
 
 inductive Predicate where
   | NamedNode : String → Predicate
-deriving Repr
+deriving Lean.ToJson, Lean.FromJson, Repr
 
 instance : ToString Predicate where
   toString s := match s with
-  | Predicate.NamedNode s => "<" ++ s ++ ">"
+  | Predicate.NamedNode s => s
 
 inductive Object where
   | NamedNode : String → Object
   | BlankNode : String → Object
-  | Literal : String → Object
-deriving Repr
+  | Literal : String → String → Option String → Object
+deriving Lean.ToJson, Lean.FromJson, Repr
 
-instance : ToString Object where
-  toString s := match s with
-  | Object.NamedNode s => "<" ++ s ++ ">"
-  | Object.BlankNode s => "_:" ++ s
-  | Object.Literal s => "\"" ++ s ++ "\""
+inductive Literal where
+  | Language : String → String → Literal
+  | DataTyped : String → String → Literal
+
+-- TODO: Mirror the rust literal coercions here.
+
+-- instance : ToString Object where
+--   toString s := match s with
+--   | Object.NamedNode s => s
+--   | Object.BlankNode s => s
+--   | Object.Literal s => s
 
 inductive Term where
   | NamedNode : String → Term
   | BlankNode : String → Term
-  | Literal : String → Term
+  | Literal : String → String → Option String → Term
   | Variable : String → Term
   | DefaultGraph
-deriving Inhabited, Repr
+deriving Lean.ToJson, Lean.FromJson, Repr
 
-def Term.value : Term → String
-  | Term.NamedNode s => s
-  | Term.BlankNode s => s
-  | Term.Literal s => s
-  | Term.Variable s => s
-  | Term.DefaultGraph => "DefaultGraph"
-
-def Term.termType : Term → String
-  | Term.NamedNode _ => "NamedNode"
-  | Term.BlankNode _ => "BlankNode"
-  | Term.Literal _ => "Literal"
-  | Term.Variable _ => "Variable"
-  | Term.DefaultGraph => "DefaultGraph"
-
-instance : ToString Term where
-  toString s := match s with
-  | Term.NamedNode s => "<" ++ s ++ ">"
-  | Term.BlankNode s => "_:" ++ s
-  | Term.Literal s => "\"" ++ s ++ "\""
-  | Term.Variable s => "?" ++ s
-  | Term.DefaultGraph => "DefaultGraph"
+-- instance : ToString Term where
+--   toString s := match s with
+--   | Term.NamedNode s => s
+--   | Term.BlankNode s => s
+--   | Term.Literal s => s
+--   | Term.Variable s => s
+--   | Term.DefaultGraph => "DefaultGraph"
 
 structure Triple where
   subject : Subject
   predicate : Predicate
   object : Object
-deriving Repr
-
-instance : ToString Triple where
-  toString t := "(" ++ toString t.subject ++ ", " ++ toString t.predicate ++ ", " ++ toString t.object ++ ")"
-
-instance : Coe Subject Term where
-  coe s := match s with
-  | Subject.NamedNode s => Term.NamedNode s
-  | Subject.BlankNode s => Term.BlankNode s
-
-instance : Coe Predicate Term where
-  coe s := match s with
-  | Predicate.NamedNode s => Term.NamedNode s
-
-instance : Coe Object Term where
-  coe s := match s with
-  | Object.NamedNode s => Term.NamedNode s
-  | Object.BlankNode s => Term.BlankNode s
-  | Object.Literal s => Term.Literal s
+deriving Lean.ToJson, Lean.FromJson, Repr
 
 
-def toSubject (t s : String) : Except String Subject :=
-  if t = "NamedNode" then Except.ok $ Subject.NamedNode s
-  else if t = "BlankNode" then Except.ok $ Subject.BlankNode s
-  else Except.error ("Invalid Subject type [" ++ t ++ "]")
+-- @[extern "input_test"]
+-- opaque parseFromRust : Json → Json
 
-def toPredicate (t s : String) : Except String Predicate :=
-  if t = "NamedNode" then Except.ok $ Predicate.NamedNode s
-  else Except.error ("Invalid Predicate type [" ++ t ++ "]")
+@[extern "input_test"]
+opaque parseFromRust : String → String
 
-def toObject (t s : String) : Except String Object :=
-  if t = "NamedNode" then Except.ok $ Object.NamedNode s
-  else if t = "BlankNode" then Except.ok $ Object.BlankNode s
-  else if t = "Literal" then Except.ok $ Object.Literal s
-  else Except.error ("Invalid Object type [" ++ t ++ "]")
+def main := do
+  -- let startTime ← IO.monoMsNow
+  -- let s ← IO.FS.readFile "ledger_account.json"
+  -- -- Test Json Parser
+  -- let ledger : Ledger <- IO.ofExcept (get_ledger_from_json_string s)
+  -- IO.println (toJson ledger)
+  -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" "en" ⟩ : Triple))
+  -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
+  -- IO.println $ parseFromRust (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
+  IO.println $ parseFromRust (toString (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple)))
 
-def toTriple (t : Array String) : Except String Triple := do
-  if h: t.size = 6 then
-    pure ⟨
-      (← toSubject (t.get ⟨0, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨1, by rw [h]; simp (config := {decide := true})⟩)),
-      (← toPredicate (t.get ⟨2, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨3, by rw [h]; simp (config := {decide := true})⟩)),
-      (← toObject (t.get ⟨4, by rw [h]; simp (config := {decide := true})⟩) (t.get ⟨5, by rw [h]; simp (config := {decide := true})⟩))
-    ⟩
-  else Except.error ("Invalid Triple length [" ++ toString t.size ++ "]")
+  -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
 
-def fromTriple (t : Triple) : Array String := #[
-  Term.termType t.subject, Term.value t.subject,
-  Term.termType t.predicate, Term.value t.predicate,
-  Term.termType t.object, Term.value t.object
-]
-
-def convert (str: Array (Array String)): Except String (Array Triple) := str.mapM toTriple
-
-def parse (a b c: String) := convert $ parseFromRust a b c
-
-def main : IO Unit :=
-  -- IO.println $ addFromRust "Hello from Lean!"
-  IO.println $ parse "@prefix e: <http://e/> . <http://example.org/a> <http://example.org/b> \"c\", \"d\", \"f\", \"f\"@en, [], e:x ." "text/n3" "http://example.org/my/base"
+  -- timestamp
+  -- IO.println s!"Finished: {(← IO.monoMsNow) - startTime}ms\n"

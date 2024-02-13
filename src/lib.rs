@@ -1,18 +1,25 @@
 extern crate lean_sys;
 extern crate oxrdf;
-use std::slice;
+extern crate json;
+
+use std::{error, slice};
+use json::JsonValue;
 use lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget};
 extern crate oxrdfio;
 use oxrdfio::{RdfFormat, RdfParser, ParseError, RdfSerializer}; // RdfSerializer
-use oxrdf::{Literal, NamedNode, Quad, Term};
+use oxrdf::{BlankNode, Literal, NamedNode, Quad, Subject, Term, Triple};
 use std::str;
 
 pub fn to_term(term_type: &str, value: &str) -> Option<Term> {
     if term_type == "NamedNode" {
         return Some(NamedNode::new(value).unwrap().into());
     } else if term_type == "BlankNode" {
-        return Some(oxrdf::BlankNode::new(value).unwrap().into());
+        return Some(BlankNode::new(value).unwrap().into());
     } else if term_type == "Literal" {
+        // Literal::new_typed_literal(value, datatype);
+        // Literal::new_language_tagged_literal(value, language);
+        // Literal::new_simple_literal(value);
+        // Literal::new_language_tagged_literal_unchecked(value, language);
         // Literal::
         return Some(NamedNode::new("http://example.com/error").unwrap().into());
     } else if term_type == "DefaultGraph" {
@@ -45,6 +52,140 @@ pub fn serialize_to_rust(quads: lean_obj_res, fmt: lean_obj_res) -> lean_obj_res
     let result = serializer.finish().unwrap();
     let resultstr = str::from_utf8(&result).unwrap();
     return lean_mk_rust_string(resultstr);
+}
+
+// pub fn Triple::from
+
+// Triple::From<JsonValue>
+
+pub fn to_term_2() -> Term {
+    return NamedNode::new("http://example.com/s").unwrap().into();
+}
+
+// impl From<JsonValue> for Triple {
+//     fn from(json: JsonValue) -> Self {
+//         // let subject = json["subject"]["NamedNode"].as_str().unwrap();
+//         // let predicate = json["predicate"]["NamedNode"].as_str().unwrap();
+//         // let object = json["object"].as_str().unwrap();
+        // return Triple {
+        //     subject: NamedNode::new(subject).unwrap().into(),
+        //     predicate: NamedNode::new(subject).unwrap().into(),
+        //     object: NamedNode::new(subject).unwrap().into(),
+        // };
+//     }
+// }
+
+pub fn from_subject(subject: Subject) -> JsonValue {
+    if subject.is_blank_node() {
+        return json::object! {
+            "BlankNode" => subject.to_string()
+        };
+    } else if subject.is_named_node() {
+        return json::object! {
+            "NamedNode" => subject.to_string()
+        };
+    }
+    panic!("Invalid subject type");
+}
+
+pub fn from_predicate(predicate: NamedNode) -> JsonValue {
+    return json::object! {
+        "NamedNode" => predicate.to_string()
+    };
+}
+
+pub fn from_term(object: Term) -> JsonValue {
+    if object.is_blank_node() {
+        return json::object! {
+            "BlankNode" => object.to_string()
+        };
+    } else if object.is_named_node() {
+        return json::object! {
+            "NamedNode" => object.to_string()
+        };
+    } else if object.is_literal() {
+        let literal: Literal = object;
+        if literal.is_language_tagged_literal() {
+            return json::object! {
+                "Literal" => [
+                    literal.value(),
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                    literal.language().unwrap()
+                ]
+            };
+        } else {
+            return json::object! {
+                "Literal" => [
+                    literal.value(),
+                    literal.datatype().unwrap().to_string()
+                ]
+            };
+        }
+    }
+    panic!("Invalid object type");
+}
+
+pub fn get_subject(json: JsonValue) -> Subject {
+    if json.has_key("NamedNode") {
+        let subject = json["NamedNode"].as_str().unwrap();
+        return NamedNode::new(subject).unwrap().into();
+    } else if json.has_key("BlankNode") {
+        let subject = json["BlankNode"].as_str().unwrap();
+        return BlankNode::new(subject).unwrap().into();
+    }
+    panic!("Invalid subject type");
+}
+
+pub fn get_predicate(json: JsonValue) -> NamedNode {
+    if json.has_key("NamedNode") {
+        let subject = json["NamedNode"].as_str().unwrap();
+        return NamedNode::new(subject).unwrap().into();
+    }
+    panic!("Invalid predicate type");
+}
+
+pub fn get_object(json: JsonValue) -> Term {
+    if json.has_key("NamedNode") {
+        let subject = json["NamedNode"].as_str().unwrap();
+        return NamedNode::new(subject).unwrap().into();
+    } else if json.has_key("BlankNode") {
+        let subject = json["BlankNode"].as_str().unwrap();
+        return BlankNode::new(subject).unwrap().into();
+    } else if json.has_key("Literal") {
+        let subject = json["Literal"][0].as_str().unwrap();
+        if json["Literal"][2].is_null() {
+            return Literal::new_typed_literal(
+                subject,
+                NamedNode::new(json["Literal"][1].as_str().unwrap()).unwrap()
+            ).into();
+        }
+        // FIXME: Panic if the datatype is not a langString here
+        return Literal::new_language_tagged_literal(
+            subject,
+            json["Literal"][2].as_str().unwrap()
+        ).unwrap().into();
+    }
+    panic!("Invalid object type");
+}
+
+#[no_mangle]
+pub fn input_test(object: lean_obj_res) -> lean_obj_res {
+    // lean_is_ref(object);
+    // JSON.p
+    // let str = lean_to_rust_string(object);
+    // let js: Triple = json::parse(str).unwrap().into();
+    // let s = js["subject"]["NamedNode"].as_str().unwrap();
+    // let o = &js["object"]["Literal"][1].as_str().unwrap();
+
+    let js = Triple {
+        subject: to_term_2().,
+        predicate: NamedNode::new(subject).unwrap().into(),
+        object: NamedNode::new(subject).unwrap().into(),
+    };
+
+    println!("Hello from Rust {js}!");
+
+    return object;
 }
 
 pub fn parse(s: &[u8], fmt: &str, base_iri: &str) -> Option<Vec<Quad>> {
