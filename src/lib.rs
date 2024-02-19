@@ -332,16 +332,19 @@
 // use crate;
 
 mod from_term;
+mod to_term;
 extern crate oxrdf;
+extern crate json;
+// use json::JsonValue;
 
-#[cfg(test)]
-mod tests {
-    use oxrdf::NamedNode;
-    use from_term::from_term;
+// #[cfg(test)]
+// mod tests {
+//     use oxrdf::NamedNode;
+//     use from_term::from_term;
 
-    #[test]
-    fn exploration() {
-        assert_eq!(from_term(NamedNode::new("http://example.org/").unwrap().into()), json::object!{"NamedNode": "http://example.org/"});
-        assert_eq!(2 + 2, 4);
-    }
-}
+//     #[test]
+//     fn exploration() {
+//         assert_eq!(from_term(NamedNode::new("http://example.org/").unwrap().into()), json::object!{"NamedNode": "http://example.org/"});
+//         assert_eq!(2 + 2, 4);
+//     }
+// }

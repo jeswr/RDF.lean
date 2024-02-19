@@ -1,37 +1,43 @@
 extern crate json;
-extern crate lean_sys;
 extern crate oxrdf;
 
-use self::json::{object::Object, JsonValue};
-use std::{convert::TryInto, error, slice};
-use self::oxrdf::{BlankNode, Literal, NamedNode, Quad, Subject, Term, Triple};
+use json::JsonValue;
+use oxrdf::{Term, Triple};
 
 pub fn from_term(object: Term) -> JsonValue {
     match object {
-        Term::NamedNode(iri) => {
-            let str = iri.into_string();
-            return json::object! {"NamedNode": &str[1..str.len()-1]};
-        }
-        Term::BlankNode(id) => {
-            let str = id.into_string();
-            return json::object! {"BlankNode": &str[2..str.len()]};
-        }
+        Term::NamedNode(iri) => json::object!{"NamedNode": iri.into_string()},
+        Term::BlankNode(id) => json::object!{"BlankNode": id.into_string()},
         Term::Literal(literal) => {
             let value = literal.value();
             let datatype = from_term(literal.datatype().into());
             if let Some(language) = literal.language() {
-                return json::object! {"Literal": [&value[1..value.len()-1], datatype, language]};
+                return json::object! {"Literal": [value, datatype, language]};
             } else {
-                return json::object! {"Literal": [&value[1..value.len()-1], datatype]};
+                return json::object! {"Literal": [value, datatype]};
             }
         }
     }
 }
 
+pub fn from_triple(triple: Triple) -> JsonValue {
+    json::object! {
+        "subject": from_term(triple.subject.into()),
+        "predicate": from_term(triple.predicate.into()),
+        "object": from_term(triple.object.into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::from_term;
+    use oxrdf::{BlankNode, Literal, NamedNode};
+
     #[test]
     fn exploration() {
-        assert_eq!(2 + 2, 4);
+        assert_eq!(from_term(NamedNode::new("http://example.org/").unwrap().into()), json::object!{"NamedNode": "http://example.org/"});
+        assert_eq!(from_term(BlankNode::new("abc123").unwrap().into()), json::object!{"BlankNode": "abc123"});
+        assert_eq!(from_term(Literal::new_language_tagged_literal("Hello World!", "en").unwrap().into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" }, "en"]});
+        assert_eq!(from_term(Literal::new_simple_literal("Hello World!").into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/2001/XMLSchema#string" }]});
     }
 }
