@@ -35,19 +35,30 @@ pub fn to_term(term_type: JsonValue) -> Option<Term> {
   return None
 }
 
+fn to_subject(subject: JsonValue) -> Option<Subject> {
+  to_term(subject).and_then(|term| {
+    match term {
+      Term::NamedNode(namedNode) => Some(Subject::NamedNode(namedNode)),
+      Term::BlankNode(namedNode) => Some(Subject::BlankNode(namedNode)),
+      _ => None,
+    }
+  })
+}
+
+fn to_named_node(named_node: JsonValue) -> Option<NamedNode> {
+  to_term(named_node).and_then(|term| {
+    match term {
+      Term::NamedNode(namedNode) => Some(namedNode),
+      _ => None,
+    }
+  })
+}
 
 pub fn to_triple(triple: JsonValue) -> Option<oxrdf::Triple> {
-  let subject = to_term(triple["subject"].clone());
-
-  match subject {
-    Term::NamedNode(namedNode) => return None,
-    Term::BlankNode(namedNode) => return None,
+  match (to_subject(triple["subject"].clone()), to_named_node(triple["predicate"].clone()), to_term(triple["object"].clone())) {
+    (Some(subject), Some(predicate), Some(object)) => Some(oxrdf::Triple::new(subject, predicate, object)),
+    _ => None,
   }
-
-  let subject: Option<Subject> = to_term(triple["subject"].clone());
-  let predicate = to_term(triple["predicate"].clone())?;
-  let object = to_term(triple["object"].clone())?;
-  return Some(oxrdf::Triple::new(subject, predicate, object));
 }
 
 #[cfg(test)]
@@ -63,5 +74,7 @@ mod tests {
     assert_eq!(to_term(json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/2001/XMLSchema#string" }]}), Some(Term::Literal(Literal::new_simple_literal("Hello World!"))));
     assert_eq!(to_term(json::object!{"Literal": ["3", {"NamedNode": "http://www.w3.org/2001/XMLSchema#integer" }]}), Some(Term::Literal(3.into())));
     assert_eq!(to_term(json::object!{"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]}), Some(Term::Literal(true.into())));
+
+    assert_eq!(to_term(json::object!{"Literal": ["3", {"NamedNode": "http://www.w3.org/2001/XMLSchema#integer" }, "en"]}), None);
   }
 }

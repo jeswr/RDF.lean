@@ -13,9 +13,8 @@ pub fn from_term(object: Term) -> JsonValue {
             let datatype = from_term(literal.datatype().into());
             if let Some(language) = literal.language() {
                 return json::object! {"Literal": [value, datatype, language]};
-            } else {
-                return json::object! {"Literal": [value, datatype]};
             }
+            json::object! {"Literal": [value, datatype]}
         }
     }
 }
