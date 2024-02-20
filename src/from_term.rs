@@ -2,7 +2,7 @@ extern crate json;
 extern crate oxrdf;
 
 use json::JsonValue;
-use oxrdf::{Term, Triple};
+use oxrdf::{Term, Triple, Quad};
 
 pub fn from_term(object: Term) -> JsonValue {
     match object {

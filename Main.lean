@@ -93,10 +93,17 @@ deriving Lean.ToJson, Lean.FromJson, Repr
 -- @[extern "input_test"]
 -- opaque parseFromRust : Json → Json
 
-@[extern "input_test"]
-opaque parseFromRust : String → String
+@[extern "parse"]
+opaque parseFromRustBridge : String → String → String → Array String
+
+def toTriple (s: String): Except String Triple := do return (← fromJson? (← Json.parse s))
+
+def parseFromRust (s: String) (format: String) (base: String): Except String (Array Triple) := (parseFromRustBridge s format base).mapM toTriple
+
+-- def toTriple (s: String) : Except String Triple := fromJson? · fromString
 
 def main := do
+  -- let triples ← parseFromRust "<http://example.org/a> <http://example.org/b> <http://example.org/c>, \"c\", true, \"hello world!\"@en ." "text/turtle" "http://example.org"
   -- let startTime ← IO.monoMsNow
   -- let s ← IO.FS.readFile "ledger_account.json"
   -- -- Test Json Parser
@@ -105,9 +112,10 @@ def main := do
   -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" "en" ⟩ : Triple))
   -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
   -- IO.println $ parseFromRust (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
-  IO.println $ parseFromRust (toString (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple)))
+  -- IO.println $ parseFromRust (toString (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple)))
 
   -- IO.println (toJson $ (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩ : Triple))
 
   -- timestamp
-  -- IO.println s!"Finished: {(← IO.monoMsNow) - startTime}ms\n"
+  IO.println (⟨ Subject.NamedNode "foo", Predicate.NamedNode "foo", Object.Literal "foo" "http://example.org/langstring" none ⟩: Triple)
+  -- Unit.unit
