@@ -29,8 +29,8 @@ pub fn from_triple(triple: Triple) -> JsonValue {
 
 #[cfg(test)]
 mod tests {
-    use super::from_term;
-    use oxrdf::{BlankNode, Literal, NamedNode};
+    use super::*;
+    use oxrdf::{BlankNode, Literal, NamedNode, Triple};
 
     #[test]
     fn exploration() {
@@ -38,5 +38,17 @@ mod tests {
         assert_eq!(from_term(BlankNode::new("abc123").unwrap().into()), json::object!{"BlankNode": "abc123"});
         assert_eq!(from_term(Literal::new_language_tagged_literal("Hello World!", "en").unwrap().into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" }, "en"]});
         assert_eq!(from_term(Literal::new_simple_literal("Hello World!").into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/2001/XMLSchema#string" }]});
+
+        assert_eq!(from_triple(Triple::new(NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap())), json::object!{
+            "subject": {"NamedNode": "http://example.org/"},
+            "predicate": {"NamedNode": "http://example.org/"},
+            "object": {"NamedNode": "http://example.org/"},
+        });
+        assert_eq!(from_triple(Triple::new(NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap(), Term::Literal(true.into()))), json::object!{
+            "subject": {"NamedNode": "http://example.org/"},
+            "predicate": {"NamedNode": "http://example.org/"},
+            "object": {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]},
+        });
+      
     }
 }
