@@ -1,7 +1,7 @@
 extern crate json;
 extern crate oxrdf;
 
-use json::JsonValue;
+use json::JsonValue::{self, Null};
 use oxrdf::{BlankNode, Literal, NamedNode, Subject, Term};
 
 pub fn to_term(term_type: JsonValue) -> Option<Term> {
@@ -11,60 +11,33 @@ pub fn to_term(term_type: JsonValue) -> Option<Term> {
   if term_type.has_key("BlankNode") {
     return term_type["BlankNode"].as_str().and_then(|value| BlankNode::new(value).ok()).map(|node| node.into());
   }
-  if term_type.has_key("Literal") {
-    if !term_type["Literal"].is_array() {
-      return None;
-    }
-    return term_type["Literal"][0].as_str().and_then(|value| {
-      to_term(term_type["Literal"][1].clone()).and_then(|datatype| {
-        match datatype {
-          Term::NamedNode(iri) => {
-            // FIXME: Error in the case where we have a language tag, but the datatype is not rdf:langString
-            return term_type["Literal"][2].as_str().map(|language| {
-              Term::Literal(Literal::new_language_tagged_literal(value, language).unwrap()).into()
-            }).unwrap_or_else(|| {
-              Term::Literal(Literal::new_typed_literal(value, iri)).into()
-            });
-          },
-          _ => None::<Term>,
-        };
-        None
-      })
-    })
+  if term_type.has_key("Literal") && term_type["Literal"].is_array() {
+    match (term_type["Literal"][0].as_str(), to_term(term_type["Literal"][1].clone()), term_type["Literal"][2].as_str()) {
+      (Some(value), Some(Term::NamedNode(datatype)), Some(language)) => {
+        if datatype.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" {
+          return Literal::new_language_tagged_literal(value, language).ok().map(|node| node.into())
+        }
+        return None
+      },
+      (Some(value), Some(Term::NamedNode(datatype)), _) => return Some(Literal::new_typed_literal(value, datatype).into()),
+      _ => return None,
+    };
   }
-  return None
-}
-
-fn to_subject(subject: JsonValue) -> Option<Subject> {
-  to_term(subject).and_then(|term| {
-    match term {
-      Term::NamedNode(namedNode) => Some(Subject::NamedNode(namedNode)),
-      Term::BlankNode(namedNode) => Some(Subject::BlankNode(namedNode)),
-      _ => None,
-    }
-  })
-}
-
-fn to_named_node(named_node: JsonValue) -> Option<NamedNode> {
-  to_term(named_node).and_then(|term| {
-    match term {
-      Term::NamedNode(namedNode) => Some(namedNode),
-      _ => None,
-    }
-  })
+  None
 }
 
 pub fn to_triple(triple: JsonValue) -> Option<oxrdf::Triple> {
-  match (to_subject(triple["subject"].clone()), to_named_node(triple["predicate"].clone()), to_term(triple["object"].clone())) {
-    (Some(subject), Some(predicate), Some(object)) => Some(oxrdf::Triple::new(subject, predicate, object)),
+  match (to_term(triple["subject"].clone()), to_term(triple["predicate"].clone()), to_term(triple["object"].clone())) {
+    (Some(Term::NamedNode(subject)), Some(Term::NamedNode(predicate)), Some(object)) => Some(oxrdf::Triple::new(subject, predicate, object)),
+    (Some(Term::BlankNode(subject)), Some(Term::NamedNode(predicate)), Some(object)) => Some(oxrdf::Triple::new(subject, predicate, object)),
     _ => None,
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use super::to_term;
-  use oxrdf::{BlankNode, Literal, NamedNode, Term};
+  use super::*;
+  use oxrdf::{BlankNode, Literal, NamedNode, Term, Triple};
 
   #[test]
   fn exploration() {
@@ -76,5 +49,16 @@ mod tests {
     assert_eq!(to_term(json::object!{"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]}), Some(Term::Literal(true.into())));
 
     assert_eq!(to_term(json::object!{"Literal": ["3", {"NamedNode": "http://www.w3.org/2001/XMLSchema#integer" }, "en"]}), None);
+    assert_eq!(to_triple(json::object!{
+      "subject": {"NamedNode": "http://example.org/"},
+      "predicate": {"NamedNode": "http://example.org/"},
+      "object": {"NamedNode": "http://example.org/"},
+    }), Some(Triple::new(NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap())));
+
+    assert_eq!(to_triple(json::object!{
+      "subject": {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]},
+      "predicate": {"NamedNode": "http://example.org/"},
+      "object": {"NamedNode": "http://example.org/"},
+    }), None);
   }
 }
