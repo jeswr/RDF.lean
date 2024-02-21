@@ -1,3 +1,6 @@
+class NamedNode (a : Type) where
+  namedNode : String → a
+
 inductive Subject where
   | NamedNode : String → Subject
   | BlankNode : String → Subject
@@ -16,17 +19,36 @@ instance : ToString Predicate where
   toString s := match s with
   | Predicate.NamedNode s => s
 
+inductive Literal where
+  | Language : String → Literal
+  | DataTyped : String → String → Literal
+
 inductive Object where
   | NamedNode : String → Object
   | BlankNode : String → Object
   | Literal : String → Object
 deriving Repr
 
-inductive Literal where
-  | Language : String → String → Literal
-  | DataTyped : String → String → Literal
-
 -- TODO: Mirror the rust literal coercions here.
+
+instance : Coe Int Literal where
+  coe s := Literal.DataTyped (toString s) "http://www.w3.org/2001/XMLSchema#integer"
+
+instance : Coe Bool Literal where
+  coe s := Literal.DataTyped (toString s) "http://www.w3.org/2001/XMLSchema#boolean"
+
+instance : Coe Float Literal where
+  coe s := Literal.DataTyped (toString s) "http://www.w3.org/2001/XMLSchema#float"
+
+instance : Coe String Literal where
+  coe s := Literal.DataTyped s "http://www.w3.org/2001/XMLSchema#string"
+
+-- instance : Coe String Object where
+--   coe s := Object.Literal s
+
+
+-- instance : Coe String Literal where
+--   coe s := Literal.DataTyped s ""
 
 instance : ToString Object where
   toString s := match s with
