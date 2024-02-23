@@ -2,16 +2,15 @@ extern crate json;
 extern crate oxrdf;
 
 use json::JsonValue;
-use oxrdf::{Term, Triple, Literal};
+use oxrdf::{NamedNode, Term, Triple};
 
 pub fn from_term(object: Term) -> JsonValue {
     match object {
         Term::NamedNode(iri) => json::object!{"NamedNode": iri.into_string()},
         Term::BlankNode(id) => json::object!{"BlankNode": id.into_string()},
         Term::Literal(literal) => json::object!{"Literal": match literal.destruct() {
-            (value, None, None) => json::object!{ "Simple": value },
-            (value, Some(datatype), _) => json::object!{ "Typed": [value, from_term(Term::NamedNode(datatype.clone()))] },
             (value, _, Some(language)) => json::object!{ "LanguageTagged": [value, language] },
+            (value, datatype, _) => json::object!{ "Typed": [value, from_term(Term::NamedNode(datatype.clone().unwrap_or(NamedNode::new("http://www.w3.org/2001/XMLSchema#string").unwrap())))] },
         }},
     }
 }
