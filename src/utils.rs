@@ -1,7 +1,13 @@
 extern crate lean_sys;
-use std::{slice, str::{self, Utf8Error}};
+use std::{
+    slice,
+    str::{self, Utf8Error},
+};
 
-use self::lean_sys::{lean_array_push, lean_mk_empty_array, lean_obj_res, lean_mk_string_from_bytes, lean_string_cstr, lean_string_len, lean_array_size, lean_array_uget, lean_initialize};
+use self::lean_sys::{
+    lean_array_push, lean_array_size, lean_array_uget, lean_initialize, lean_mk_empty_array,
+    lean_mk_string_from_bytes, lean_obj_res, lean_string_cstr, lean_string_len,
+};
 
 pub fn lean_string_utf8(s: lean_obj_res) -> &'static [u8] {
     unsafe { slice::from_raw_parts(lean_string_cstr(s), lean_string_len(s)) }
