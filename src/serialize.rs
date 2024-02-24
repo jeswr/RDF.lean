@@ -3,20 +3,17 @@ extern crate lean_sys;
 extern crate oxrdf;
 
 use self::lean_sys::{
-    lean_array_push, lean_array_size, lean_array_uget, lean_initialize, lean_mk_empty_array,
-    lean_mk_string_from_bytes, lean_obj_res, lean_string_cstr, lean_string_len,
+    lean_array_size, lean_array_uget, lean_obj_res,
 };
-use json::{object::Object, JsonValue};
-use std::{convert::TryInto, error, slice};
+
 extern crate oxrdfio;
-use oxrdf::{BlankNode, Literal, NamedNode, Quad, Subject, Term, Triple};
-use oxrdfio::{ParseError, RdfFormat, RdfParser, RdfSerializer}; // RdfSerializer
+use oxrdf::{Quad, Triple};
+use oxrdfio::{RdfFormat, RdfSerializer}; // RdfSerializer
 
 use crate::{
-    from_term::{from_term, from_triple},
     to_term::to_triple,
     utils::{
-        lean_mk_string_from_str, lean_mk_string_from_string, lean_string_str, lean_string_utf8,
+        lean_mk_string_from_str, lean_string_str,
     },
 };
 

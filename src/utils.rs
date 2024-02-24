@@ -5,7 +5,6 @@ use std::{
 };
 
 use self::lean_sys::{
-    lean_array_push, lean_array_size, lean_array_uget, lean_initialize, lean_mk_empty_array,
     lean_mk_string_from_bytes, lean_obj_res, lean_string_cstr, lean_string_len,
 };
 
