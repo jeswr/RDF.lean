@@ -19,11 +19,11 @@ pub fn to_term(term_type: JsonValue) -> Option<Term> {
             .ok()
             .map(|node| node.into());
     }
-    if let (Some(value), Some(Term::NamedNode(named_node))) = (
+    if let (Some(value), Some(named_node)) = (
         term_type["Literal"]["Typed"]["value"].as_str(),
-        to_term(term_type["Literal"]["Typed"]["datatype"].clone()),
+        term_type["Literal"]["Typed"]["datatype"]["iri"].as_str(),
     ) {
-        return Some(Term::Literal(Literal::new_typed_literal(value, named_node)));
+        return Some(Term::Literal(Literal::new_typed_literal(value, NamedNode::new(named_node).ok()?)));
     }
     None
 }
