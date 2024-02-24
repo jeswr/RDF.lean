@@ -14,7 +14,7 @@ opaque serializeFromRustBridge : Array String → String → String
 
 def toTriple (s: String): Except String Triple := do return (← fromJson? (← Json.parse s))
 def parseFromRust (s: String) (format: String) (base: String): Except String (Array Triple) := (parseFromRustBridge s format base).mapM toTriple
-def serializeFromRust (triples: Array Triple) (format: String) : String := serializeFromRustBridge ((triples.map toJson).map toString) format
+def serializeFromRust (triples: Array Triple) (format: String) : String := serializeFromRustBridge (triples.map (toString ∘ toJson)) format
 
 def main : IO Unit := do
   let str: String := "<http://example.org/a> <http://example.org/b> </c>, \"c\", \"c\", true, \"hello world!\"@en ."

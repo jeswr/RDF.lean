@@ -2,11 +2,6 @@ import Lean
 import lib.BlankNode
 import lib.NamedNode
 import lib.Literal
-import Lean.Data.Json.Basic
-import Lean.Data.Json.Parser
-import Lean.Data.Json.Printer
-
--- open Lean Json ToJson FromJson
 
 inductive Subject where
   | NamedNode : NamedNode → Subject
@@ -61,9 +56,3 @@ deriving Repr, DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString Triple where
   toString triple := "(" ++ toString triple.subject ++ ", " ++ toString triple.predicate ++ ", " ++ toString triple.object ++ ")"
-
-open Lean Json ToJson FromJson
-
-#eval toString (⟨Subject.NamedNode ⟨"http://example.com/subject"⟩, Predicate.NamedNode ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple)
-#eval (toJson (⟨Subject.BlankNode ⟨"http://example.com/subject"⟩, Predicate.NamedNode ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple))
-#eval (toJson (Literal.LanguageTaggedString ⟨"hello", "en"⟩))
