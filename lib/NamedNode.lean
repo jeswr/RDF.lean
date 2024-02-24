@@ -1,6 +1,8 @@
+import Lean
+
 structure NamedNode where
   iri : String
-deriving DecidableEq
+deriving DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString NamedNode where
   toString s := "<" ++ s.iri ++ ">"

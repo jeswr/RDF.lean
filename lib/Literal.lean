@@ -1,10 +1,11 @@
+import Lean
 import lib.NamedNode
 import lib.vocab
 
 structure LanguageTaggedStringLiteral where
   value : String
   language : String
-deriving DecidableEq
+deriving DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString LanguageTaggedStringLiteral where
   toString s := "\"" ++ s.value ++ "\"@" ++ s.language
@@ -15,7 +16,7 @@ instance : Repr LanguageTaggedStringLiteral where
 structure TypedLiteral where
   value : String
   datatype : NamedNode
-deriving DecidableEq
+deriving DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString TypedLiteral where
   toString s := "\"" ++ s.value ++ "\"^^" ++ (toString s.datatype)
@@ -26,7 +27,7 @@ instance : Repr TypedLiteral where
 inductive Literal where
   | LanguageTaggedString : LanguageTaggedStringLiteral → Literal
   | Typed : TypedLiteral → Literal
-deriving Repr, DecidableEq
+deriving Repr, DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString Literal where
   toString : Literal → String
