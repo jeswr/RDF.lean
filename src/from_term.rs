@@ -6,11 +6,14 @@ use oxrdf::{NamedNode, Term, Triple};
 
 pub fn from_term(object: Term) -> JsonValue {
     match object {
-        Term::NamedNode(iri) => json::object!{"NamedNode": iri.into_string()},
-        Term::BlankNode(id) => json::object!{"BlankNode": id.into_string()},
+        Term::NamedNode(iri) => json::object!{"NamedNode": { "iri": iri.into_string() }},
+        Term::BlankNode(id) => json::object!{"BlankNode": { "id": id.into_string() }},
         Term::Literal(literal) => json::object!{"Literal": match literal.destruct() {
-            (value, _, Some(language)) => json::object!{ "LanguageTagged": [value, language] },
-            (value, datatype, _) => json::object!{ "Typed": [value, from_term(Term::NamedNode(datatype.clone().unwrap_or(NamedNode::new("http://www.w3.org/2001/XMLSchema#string").unwrap())))] },
+            (value, _, Some(language)) => json::object!{ "LanguageTaggedString": { "value": value, "language": language } },
+            (value, datatype, _) => json::object!{ "Typed": {
+                "value": value,
+                "datatype": from_term(Term::NamedNode(datatype.clone().unwrap_or(NamedNode::new("http://www.w3.org/2001/XMLSchema#string").unwrap()))),
+            }},
         }},
     }
 }
@@ -30,20 +33,25 @@ mod tests {
 
     #[test]
     fn exploration() {
-        assert_eq!(from_term(NamedNode::new("http://example.org/").unwrap().into()), json::object!{"NamedNode": "http://example.org/"});
-        assert_eq!(from_term(BlankNode::new("abc123").unwrap().into()), json::object!{"BlankNode": "abc123"});
-        assert_eq!(from_term(Literal::new_language_tagged_literal("Hello World!", "en").unwrap().into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" }, "en"]});
-        assert_eq!(from_term(Literal::new_simple_literal("Hello World!").into()), json::object!{"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/2001/XMLSchema#string" }]});
+        let hello_world_literal = json::object!{"Literal": {"LanguageTaggedString": {
+            "value": "Hello World!",
+            "language": "en",
+        }}};
+        let literal = json::object!{"Literal": {"Typed": json::object!{"value": String::from("Hello World!"), "dataype": {"NamedNode": {"iri": "http://www.w3.org/2001/XMLSchema#string"}}}}};
+        let literal_true = json::object!{"Literal": {"Typed": {"value": "true", "dataype": {"NamedNode": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}}};
+        assert_eq!(from_term(NamedNode::new("http://example.org/").unwrap().into()), json::object!{"NamedNode": {"iri": "http://example.org/"}});
+        assert_eq!(from_term(BlankNode::new("abc123").unwrap().into()), json::object!{"BlankNode": {"id": "abc123"}});
+        assert_eq!(from_term(Literal::new_language_tagged_literal("Hello World!", "en").unwrap().into()), hello_world_literal);
+        assert_eq!(from_term(Literal::new_simple_literal("Hello World!").into()), literal);
         assert_eq!(from_triple(Triple::new(NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap())), json::object!{
-            "subject": {"NamedNode": "http://example.org/"},
-            "predicate": {"NamedNode": "http://example.org/"},
-            "object": {"NamedNode": "http://example.org/"},
+            "subject": {"NamedNode": {"iri": "http://example.org/"}},
+            "predicate": {"NamedNode": {"iri": "http://example.org/"}},
+            "object": {"NamedNode": {"iri": "http://example.org/"}},
         });
         assert_eq!(from_triple(Triple::new(NamedNode::new("http://example.org/").unwrap(), NamedNode::new("http://example.org/").unwrap(), Term::Literal(true.into()))), json::object!{
-            "subject": {"NamedNode": "http://example.org/"},
-            "predicate": {"NamedNode": "http://example.org/"},
-            "object": {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]},
+            "subject": {"NamedNode": {"iri": "http://example.org/"}},
+            "predicate": {"NamedNode": {"iri": "http://example.org/"}},
+            "object": literal_true,
         });
-      
     }
 }

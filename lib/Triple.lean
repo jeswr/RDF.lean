@@ -23,6 +23,17 @@ instance : Coe NamedNode Subject where
 instance : Coe BlankNode Subject where
   coe n := Subject.BlankNode n
 
+inductive Predicate where
+  | NamedNode : NamedNode → Predicate
+deriving Repr, DecidableEq, Lean.ToJson, Lean.FromJson
+
+instance : ToString Predicate where
+  toString : Predicate → String
+  | Predicate.NamedNode s => toString s
+
+instance : Coe NamedNode Predicate where
+  coe n := Predicate.NamedNode n
+
 inductive Object where
   | NamedNode : NamedNode → Object
   | BlankNode : BlankNode → Object
@@ -44,7 +55,7 @@ instance : Coe Literal Object where
 
 structure Triple where
   subject : Subject
-  predicate : NamedNode
+  predicate : Predicate
   object : Object
 deriving Repr, DecidableEq, Lean.ToJson, Lean.FromJson
 
@@ -53,5 +64,6 @@ instance : ToString Triple where
 
 open Lean Json ToJson FromJson
 
-#eval toString (⟨Subject.NamedNode ⟨"http://example.com/subject"⟩, ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple)
-#eval (toJson (⟨Subject.NamedNode ⟨"http://example.com/subject"⟩, ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple))
+#eval toString (⟨Subject.NamedNode ⟨"http://example.com/subject"⟩, Predicate.NamedNode ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple)
+#eval (toJson (⟨Subject.BlankNode ⟨"http://example.com/subject"⟩, Predicate.NamedNode ⟨"http://example.com/predicate"⟩, Object.Literal ((1:):)⟩ : Triple))
+#eval (toJson (Literal.LanguageTaggedString ⟨"hello", "en"⟩))
