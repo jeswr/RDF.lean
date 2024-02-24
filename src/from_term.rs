@@ -12,7 +12,7 @@ pub fn from_term(object: Term) -> JsonValue {
             (value, _, Some(language)) => json::object!{ "LanguageTaggedString": { "value": value, "language": language } },
             (value, datatype, _) => json::object!{ "Typed": {
                 "value": value,
-                "datatype": from_term(Term::NamedNode(datatype.clone().unwrap_or(NamedNode::new("http://www.w3.org/2001/XMLSchema#string").unwrap()))),
+                "datatype": { "iri": if let Some(named_node) = datatype { named_node.into_string() } else { String::from("http://www.w3.org/2001/XMLSchema#string") } },
             }},
         }},
     }
