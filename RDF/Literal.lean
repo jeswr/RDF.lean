@@ -1,6 +1,6 @@
 import Lean
-import lib.NamedNode
-import lib.vocab
+import RDF.NamedNode
+import RDF.vocab
 
 structure LanguageTaggedStringLiteral where
   value : String

@@ -3,7 +3,8 @@ open System Lake DSL
 
 package RDF
 
-lean_lib lib
+@[default_target]
+lean_lib RDF
 
 @[default_target]
 lean_exe ffi where

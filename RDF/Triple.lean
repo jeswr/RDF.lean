@@ -1,7 +1,7 @@
 import Lean
-import lib.BlankNode
-import lib.NamedNode
-import lib.Literal
+import RDF.BlankNode
+import RDF.NamedNode
+import RDF.Literal
 
 inductive Subject where
   | NamedNode : NamedNode → Subject

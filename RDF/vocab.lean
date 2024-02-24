@@ -1,4 +1,4 @@
-import lib.NamedNode
+import RDF.NamedNode
 
 namespace XSD
   def mk (e: String) : NamedNode := ⟨"http://www.w3.org/2001/XMLSchema#".append e⟩
