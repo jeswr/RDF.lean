@@ -5,23 +5,17 @@ use json::JsonValue::{self, Null};
 use oxrdf::{BlankNode, Literal, NamedNode, Subject, Term};
 
 pub fn to_term(term_type: JsonValue) -> Option<Term> {
-  if let Some(value) = term_type["NamedNode"].as_str() {
+  if let Some(value) = term_type["NamedNode"]["iri"].as_str() {
     return NamedNode::new(value).ok().map(|node| node.into());
   }
-  if let Some(value) = term_type["BlankNode"].as_str() {
+  if let Some(value) = term_type["BlankNode"]["id"].as_str() {
     return BlankNode::new(value).ok().map(|node| node.into());
   }
-  if term_type["Literal"].is_array() {
-    return match (term_type["Literal"][0].as_str(), to_term(term_type["Literal"][1].clone()), term_type["Literal"][2].as_str()) {
-      (Some(value), Some(Term::NamedNode(datatype)), Some(language)) => {
-        if datatype.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" {
-          return Literal::new_language_tagged_literal(value, language).ok().map(|node| node.into())
-        }
-        None
-      },
-      (Some(value), Some(Term::NamedNode(datatype)), _) => Some(Literal::new_typed_literal(value, datatype).into()),
-      _ => None,
-    };
+  if let (Some(value), Some(language)) = (term_type["Literal"]["LanguageTaggedString"]["value"].as_str(), term_type["Literal"]["LanguageTaggedString"]["language"].as_str()) {
+    return Literal::new_language_tagged_literal(value, language).ok().map(|node| node.into());
+  }
+  if let (Some(value), Some(Term::NamedNode(named_node))) = (term_type["Literal"]["Typed"]["value"].as_str(), to_term(term_type["Literal"]["Typed"]["datatype"].clone())) {
+    return Some(Term::Literal(Literal::new_typed_literal(value, named_node)));
   }
   None
 }
