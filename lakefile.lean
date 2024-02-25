@@ -6,10 +6,6 @@ package RDF
 @[default_target]
 lean_lib RDF
 
-@[default_target]
-lean_exe ffi where
-  root := `Main
-
 extern_lib some_rust_lib (pkg : NPackage _package.name) := do
   proc { cmd := "cargo", args := #["build", "--release"], cwd := pkg.dir }
   let name := nameToSharedLib "some_rust_lib"
