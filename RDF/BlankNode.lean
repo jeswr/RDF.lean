@@ -9,3 +9,5 @@ instance : ToString BlankNode where
 
 instance : Repr BlankNode where
   reprPrec s _ := toString s
+
+macro "_:" s:term : term => `(BlankNode.mk $s)

@@ -116,3 +116,6 @@ instance : Coe UInt8 TypedLiteral  where coe s := ⟨toString s, XSD.integer⟩
 instance : Coe UInt16 TypedLiteral where coe s := ⟨toString s, XSD.integer⟩
 instance : Coe UInt32 TypedLiteral where coe s := ⟨toString s, XSD.integer⟩
 instance : Coe UInt64 TypedLiteral where coe s := ⟨toString s, XSD.integer⟩
+
+macro  s:term "@" o:term : term => `(LanguageTaggedStringLiteral.mk $s $o)
+macro  s:term "^^" o:term : term => `(TypedLiteral.mk $s $o)

@@ -9,3 +9,5 @@ instance : ToString NamedNode where
 
 instance : Repr NamedNode where
   reprPrec s _ := toString s
+
+macro "#⟨" s:term "⟩" : term => `(NamedNode.mk $s)

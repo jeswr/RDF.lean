@@ -55,4 +55,6 @@ structure Triple where
 deriving Repr, DecidableEq, Lean.ToJson, Lean.FromJson
 
 instance : ToString Triple where
-  toString triple := "(" ++ toString triple.subject ++ ", " ++ toString triple.predicate ++ ", " ++ toString triple.object ++ ")"
+  toString triple := "⟪" ++ toString triple.subject ++ " " ++ toString triple.predicate ++ " " ++ toString triple.object ++ "⟫"
+
+macro "⟪" s:term "," p:term "," o:term "⟫" : term => `(Triple.mk $s $p $o)
