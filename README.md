@@ -25,7 +25,7 @@ require RDF from git
 import RDF
 
 def main : IO Unit := do
-  IO.println (← IO.ofExcept $ RDFParse "[] </predicate> true, 1, \"hello\" \"hello\"@en ." "text/turtle" "http://example.org")
+  IO.println (← IO.ofExcept $ RDFParse "[] </predicate> true, 1, \"hello\" \"hello\"@en, (\"a\", \"b\", \"c\") ." "text/turtle" "http://example.org")
 ```
 
 ### Serializing a string
@@ -39,7 +39,6 @@ def main : IO Unit := do
     ⟪_:"b0", #⟨"http://example.org/predicate"⟩, (1:)⟫,
     ⟪_:"b0", #⟨"http://example.org/predicate"⟩, "hello"⟫,
     ⟪_:"b0", #⟨"http://example.org/predicate"⟩, "hello"@"en"⟫,
-    ⟪_:"b0", #⟨"http://example.org/predicate"⟩, "hello"@"en"⟫,
-  ]
+  ] ++ ⟪_:"b0", #⟨"http://example.org/predicate"⟩, ["a", "b", "c"]⟫
   IO.println $ RDFSerialize triples "text/turtle"
 ```
