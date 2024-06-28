@@ -1,5 +1,7 @@
 # RDF.lean
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12508840.svg)](https://doi.org/10.5281/zenodo.12508840)
+
 This is an RDF library for Lean 4. Parsing and serialization is done using [oxrdfio](https://crates.io/crates/oxrdfio).
 
 ## Usage
