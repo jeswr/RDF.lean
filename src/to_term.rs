@@ -52,21 +52,21 @@ mod tests {
     #[test]
     fn exploration() {
         assert_eq!(
-            to_term(json::object! {"NamedNode": "http://example.org/"}),
+            to_term(json::object! {"NamedNode": {"iri": "http://example.org/" }}),
             NamedNode::new("http://example.org/")
                 .ok()
                 .map(|node| Term::NamedNode(node))
         );
         assert_eq!(to_term(json::object! {}), None);
         assert_eq!(
-            to_term(json::object! {"BlankNode": "abc123"}),
+            to_term(json::object! {"BlankNode": {"id": "abc123"}}),
             BlankNode::new("abc123")
                 .ok()
                 .map(|node| Term::BlankNode(node))
         );
         assert_eq!(
             to_term(
-                json::object! {"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString" }, "en"]}
+                json::object! {"Literal": {"LanguageTaggedString": {"value": "Hello World!", "language": "en"}}}
             ),
             Literal::new_language_tagged_literal("Hello World!", "en")
                 .ok()
@@ -74,21 +74,21 @@ mod tests {
         );
         assert_eq!(
             to_term(
-                json::object! {"Literal": ["Hello World!", {"NamedNode": "http://www.w3.org/2001/XMLSchema#string" }]}
+                json::object! {"Literal": {"Typed": {"value": "Hello World!", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#string"}}}}
             ),
-            Some(Term::Literal(Literal::new_simple_literal("Hello World!")))
+            Some(Term::Literal(Literal::new_typed_literal("Hello World!", NamedNode::new("http://www.w3.org/2001/XMLSchema#string").unwrap())))
         );
         assert_eq!(
             to_term(
-                json::object! {"Literal": ["3", {"NamedNode": "http://www.w3.org/2001/XMLSchema#integer" }]}
+                json::object! {"Literal": {"Typed": {"value": "3", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#integer"}}}}
             ),
-            Some(Term::Literal(3.into()))
+            Some(Term::Literal(Literal::new_typed_literal("3", NamedNode::new("http://www.w3.org/2001/XMLSchema#integer").unwrap())))
         );
         assert_eq!(
             to_term(
-                json::object! {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]}
+                json::object! {"Literal": {"Typed": {"value": "true", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}}
             ),
-            Some(Term::Literal(true.into()))
+            Some(Term::Literal(Literal::new_typed_literal("true", NamedNode::new("http://www.w3.org/2001/XMLSchema#boolean").unwrap())))
         );
 
         assert_eq!(
@@ -100,9 +100,9 @@ mod tests {
         assert_eq!(to_term(json::object! {"Literal": "3"}), None);
         assert_eq!(
             to_triple(json::object! {
-              "subject": {"NamedNode": "http://example.org/"},
-              "predicate": {"NamedNode": "http://example.org/"},
-              "object": {"NamedNode": "http://example.org/"},
+              "subject": {"NamedNode": {"iri": "http://example.org/"}},
+              "predicate": {"NamedNode": {"iri": "http://example.org/"}},
+              "object": {"NamedNode": {"iri": "http://example.org/"}},
             }),
             Some(Triple::new(
                 NamedNode::new("http://example.org/").unwrap(),
@@ -112,22 +112,22 @@ mod tests {
         );
         assert_eq!(
             to_triple(json::object! {
-              "subject": {"NamedNode": "http://example.org/"},
-              "predicate": {"NamedNode": "http://example.org/"},
-              "object": {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]},
+              "subject": {"NamedNode": {"iri": "http://example.org/"}},
+              "predicate": {"NamedNode": {"iri": "http://example.org/"}},
+              "object": {"Literal": {"Typed": {"value": "true", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}},
             }),
             Some(Triple::new(
                 NamedNode::new("http://example.org/").unwrap(),
                 NamedNode::new("http://example.org/").unwrap(),
-                Term::Literal(true.into())
+                Term::Literal(Literal::new_typed_literal("true", NamedNode::new("http://www.w3.org/2001/XMLSchema#boolean").unwrap()))
             ))
         );
 
         assert_eq!(
             to_triple(json::object! {
-              "subject": {"Literal": ["true", {"NamedNode": "http://www.w3.org/2001/XMLSchema#boolean" }]},
-              "predicate": {"NamedNode": "http://example.org/"},
-              "object": {"NamedNode": "http://example.org/"},
+              "subject": {"Literal": {"Typed": {"value": "true", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}},
+              "predicate": {"NamedNode": {"iri": "http://example.org/"}},
+              "object": {"NamedNode": {"iri": "http://example.org/"}},
             }),
             None
         );

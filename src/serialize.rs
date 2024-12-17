@@ -18,13 +18,13 @@ use crate::{
 };
 
 pub fn i_serialize(quads: lean_obj_res, fmt: lean_obj_res) -> Option<lean_obj_res> {
-    let mut serializer = RdfSerializer::from_format(RdfFormat::from_media_type(lean_string_str(fmt).ok()?)?).serialize_to_write(Vec::new());
+    let mut serializer = RdfSerializer::from_format(RdfFormat::from_media_type(lean_string_str(fmt).ok()?)?).for_writer(Vec::new());
 
     let size = unsafe { lean_array_size(quads) };
     for i in 0..size {
         let quad = lean_string_str(unsafe { lean_array_uget(quads, i) }).ok()?;
         let triple: Triple = to_triple(json::parse(quad).ok()?)?;
-        serializer.write_quad(&Quad {
+        serializer.serialize_quad(&Quad {
             subject: triple.subject,
             predicate: triple.predicate,
             object: triple.object,

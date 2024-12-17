@@ -19,7 +19,7 @@ pub fn i_parse(s: lean_obj_res, fmt: lean_obj_res, base_iri: lean_obj_res) -> Op
     }
 
     let mut x = unsafe { lean_mk_empty_array() };
-    for quad in parser.parse_read(lean_string_utf8(s)) {
+    for quad in parser.for_reader(lean_string_utf8(s)) {
         x = unsafe {
             lean_array_push(
                 x,

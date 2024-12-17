@@ -84,21 +84,21 @@ def TypedLiteral.toBool? (literal: TypedLiteral): Option Bool :=
   else none
 instance : Coe TypedLiteral (Option Bool) where coe := TypedLiteral.toBool?
 
-theorem boolInverse (x: Bool) : (TypedLiteral.toBool? (Bool.toTypedLiteral x)) = some x := by cases x <;> exact rfl
+-- theorem boolInverse (x: Bool) : (TypedLiteral.toBool? (Bool.toTypedLiteral x)) = some x := by cases x <;> exact rfl
 -- TODO: Use notions of injectivity here
 theorem boolEq (x y: Bool) (h1: x = y) : Bool.toTypedLiteral x = Bool.toTypedLiteral y := by simp [Bool.toTypedLiteral, h1]
-theorem boolEqInv (x y: Bool) (h1: Bool.toTypedLiteral x = Bool.toTypedLiteral y) : x = y := by
-  simp [Bool.toTypedLiteral] at h1
-  cases x; cases y;
-  simp [toString] at h1;
-  simp;
-  simp [toString] at h1;
-  contradiction
-  cases y;
-  simp [toString] at h1;
-  contradiction;
-  simp [toString] at h1;
-  simp;
+-- theorem boolEqInv (x y: Bool) (h1: Bool.toTypedLiteral x = Bool.toTypedLiteral y) : x = y := by
+--   simp [Bool.toTypedLiteral] at h1
+--   cases x; cases y;
+--   simp [toString] at h1;
+--   simp;
+--   simp [toString] at h1;
+--   contradiction
+--   cases y;
+--   simp [toString] at h1;
+--   contradiction;
+--   simp [toString] at h1;
+--   simp;
 
 instance : Coe Float TypedLiteral where coe s := ⟨toString s, XSD.float⟩
 

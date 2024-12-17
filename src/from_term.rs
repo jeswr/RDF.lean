@@ -37,8 +37,8 @@ mod tests {
             "value": "Hello World!",
             "language": "en",
         }}};
-        let literal = json::object! {"Literal": {"Typed": json::object!{"value": String::from("Hello World!"), "dataype": {"NamedNode": {"iri": "http://www.w3.org/2001/XMLSchema#string"}}}}};
-        let literal_true = json::object! {"Literal": {"Typed": {"value": "true", "dataype": {"NamedNode": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}}};
+        let literal = json::object! {"Literal": {"Typed": {"value": "Hello World!", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#string"}}}};
+        let literal_true = json::object! {"Literal": {"Typed": {"value": "true", "datatype": {"iri": "http://www.w3.org/2001/XMLSchema#boolean"}}}};
         assert_eq!(
             from_term(NamedNode::new("http://example.org/").unwrap().into()),
             json::object! {"NamedNode": {"iri": "http://example.org/"}}
